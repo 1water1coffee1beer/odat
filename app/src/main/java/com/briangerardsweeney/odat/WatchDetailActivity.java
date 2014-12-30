@@ -58,5 +58,4 @@ public class WatchDetailActivity extends ActionBarActivity {
             return super.onOptionsItemSelected(item);
         }
     }
-
 }
