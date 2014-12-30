@@ -10,5 +10,10 @@
     <string name="action_save">Save</string>
     <string name="action_delete">Delete</string>
     <string name="action_history">History</string>
+    <string name="watch_detail_watch_hint">Watch for...</string>
+    <string name="watch_detail_check_sac">Steap and Cheap</string>
+    <string name="watch_detail_check_cl">Chain Love</string>
+    <string name="watch_detail_check_wm">Whiskey Militia</string>
+    <string name="watch_detail_ignore_hint">But ignore...</string>
 
 </resources>
