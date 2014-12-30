@@ -6,6 +6,9 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
+
+import com.briangerardsweeney.odat.util.OptionsMenuHandler;
 
 
 /**
@@ -87,5 +90,15 @@ public class WatchListActivity extends ActionBarActivity
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.watch_list_activity_actions, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        boolean result = new OptionsMenuHandler(this, item).invoke();
+        if(result){
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
+        }
     }
 }
