@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.briangerardsweeney.odat.util.GcmRegistrationAsyncTask;
 import com.briangerardsweeney.odat.util.OptionsMenuHandler;
 
 
@@ -54,6 +55,10 @@ public class WatchListActivity extends ActionBarActivity
                     .findFragmentById(R.id.watch_list))
                     .setActivateOnItemClick(true);
         }
+
+        new GcmRegistrationAsyncTask(this).execute();
+
+
 
         // TODO: If exposing deep links into your app, handle intents here.
     }
