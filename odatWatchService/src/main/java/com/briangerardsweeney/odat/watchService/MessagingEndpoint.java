@@ -6,7 +6,6 @@
 
 package com.briangerardsweeney.odat.watchService;
 
-import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Result;
 import com.google.android.gcm.server.Sender;
@@ -31,7 +30,16 @@ import static com.briangerardsweeney.odat.watchService.OfyService.ofy;
  * authentication! If this app is deployed, anyone can access this endpoint! If
  * you'd like to add authentication, take a look at the documentation.
  */
-@Api(name = "messaging", version = "v1", namespace = @ApiNamespace(ownerDomain = "watchService.odat.briangerardsweeney.com", ownerName = "watchService.odat.briangerardsweeney.com", packagePath = ""))
+@Api(
+        name = "messaging",
+        version = "v1",
+        namespace = @ApiNamespace(
+                ownerDomain = "watchService.odat.briangerardsweeney.com",
+                ownerName = "watchService.odat.briangerardsweeney.com",
+                packagePath = ""),
+        clientIds = { Constants.WEB_CLIENT_ID },
+        audiences = { Constants.ANDROID_AUDIENCE }
+        )
 public class MessagingEndpoint {
     private static final Logger log = Logger.getLogger(MessagingEndpoint.class.getName());
 
@@ -70,7 +78,7 @@ public class MessagingEndpoint {
                 }
             } else {
                 String error = result.getErrorCodeName();
-                if (error.equals(Constants.ERROR_NOT_REGISTERED)) {
+                if (error.equals(com.google.android.gcm.server.Constants.ERROR_NOT_REGISTERED)) {
                     log.warning("Registration Id " + record.getRegId() + " no longer registered with GCM, removing from datastore");
                     // if the device is no longer registered with Gcm, remove it from the datastore
                     ofy().delete().entity(record).now();

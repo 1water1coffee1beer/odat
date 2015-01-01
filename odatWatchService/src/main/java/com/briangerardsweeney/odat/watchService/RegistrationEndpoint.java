@@ -10,6 +10,7 @@ import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.ApiNamespace;
 import com.google.api.server.spi.response.CollectionResponse;
+import com.google.appengine.api.users.User;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -28,7 +29,15 @@ import static com.briangerardsweeney.odat.watchService.OfyService.ofy;
  * authentication! If this app is deployed, anyone can access this endpoint! If
  * you'd like to add authentication, take a look at the documentation.
  */
-@Api(name = "registration", version = "v1", namespace = @ApiNamespace(ownerDomain = "watchService.odat.briangerardsweeney.com", ownerName = "watchService.odat.briangerardsweeney.com", packagePath = ""))
+@Api(
+        name = "registration",
+        version = "v1",
+        namespace = @ApiNamespace(
+                ownerDomain = "watchService.odat.briangerardsweeney.com",
+                ownerName = "watchService.odat.briangerardsweeney.com",
+                packagePath = ""),
+        clientIds = { Constants.WEB_CLIENT_ID, Constants.ANDROID_CLIENT_ID },
+        audiences = { Constants.ANDROID_AUDIENCE })
 public class RegistrationEndpoint {
 
     private static final Logger log = Logger.getLogger(RegistrationEndpoint.class.getName());
@@ -39,7 +48,7 @@ public class RegistrationEndpoint {
      * @param regId The Google Cloud Messaging registration Id to add
      */
     @ApiMethod(name = "register")
-    public void registerDevice(@Named("regId") String regId) {
+    public void registerDevice(@Named("regId") String regId, User user) {
         if (findRecord(regId) != null) {
             log.info("Device " + regId + " already registered, skipping register");
             return;
@@ -55,7 +64,7 @@ public class RegistrationEndpoint {
      * @param regId The Google Cloud Messaging registration Id to remove
      */
     @ApiMethod(name = "unregister")
-    public void unregisterDevice(@Named("regId") String regId) {
+    public void unregisterDevice(@Named("regId") String regId, User user) {
         RegistrationRecord record = findRecord(regId);
         if (record == null) {
             log.info("Device " + regId + " not registered, skipping unregister");

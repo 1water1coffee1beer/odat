@@ -1,8 +1,9 @@
 package com.briangerardsweeney.odat;
 
+import android.accounts.AccountManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -10,6 +11,7 @@ import android.view.MenuItem;
 
 import com.briangerardsweeney.odat.util.GcmRegistrationAsyncTask;
 import com.briangerardsweeney.odat.util.OptionsMenuHandler;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 
 
 /**
@@ -37,6 +39,14 @@ public class WatchListActivity extends ActionBarActivity
      */
     private boolean mTwoPane;
 
+    private static final String ACCOUNT_NAME = "accountName";
+    private static final String SETTINGS = "deal-daemon-3-prefs";
+    private String accountName;
+    private SharedPreferences settings;
+    GoogleAccountCredential credential;
+
+    private static final int REQUEST_ACCOUNT_PICKER = 2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,11 +66,49 @@ public class WatchListActivity extends ActionBarActivity
                     .setActivateOnItemClick(true);
         }
 
+        this.settings = getSharedPreferences(SETTINGS, 0);
+        this.credential = GoogleAccountCredential.usingAudience(this, "server:client_id:646330062931-5nrl3bfiong5l1ik0tfnpcv85hvgs5n2.apps.googleusercontent.com");
+
+        setSelectedAccountName(settings.getString(ACCOUNT_NAME, null));
+
+        if(credential.getSelectedAccountName() != null){
+            //run app
+
+        } else {
+            //make them sign in
+            startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+        }
+
+        //TODO add this to first run - dont run every time unless needed
         new GcmRegistrationAsyncTask(this).execute();
 
-
-
         // TODO: If exposing deep links into your app, handle intents here.
+    }
+
+    private void setSelectedAccountName(String accountName) {
+        SharedPreferences.Editor editor = this.settings.edit();
+        editor.putString(ACCOUNT_NAME, accountName);
+        editor.commit();
+        this.credential.setSelectedAccountName(accountName);
+        this.accountName = accountName;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch(requestCode){
+            case REQUEST_ACCOUNT_PICKER:
+                if(data != null && data.getExtras() != null) {
+                    String accountName = data.getExtras().getString(AccountManager.KEY_ACCOUNT_NAME);
+                    if(accountName!=null){
+                        setSelectedAccountName(accountName);
+                        SharedPreferences.Editor editor = this.settings.edit();
+                        editor.putString(ACCOUNT_NAME, accountName);
+                        editor.commit();
+                    }
+                }
+                break;
+        }
     }
 
     /**
