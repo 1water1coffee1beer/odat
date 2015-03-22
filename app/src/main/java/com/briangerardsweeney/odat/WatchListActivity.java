@@ -1,17 +1,27 @@
 package com.briangerardsweeney.odat;
 
-import android.accounts.AccountManager;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
 
 import com.briangerardsweeney.odat.util.GcmRegistrationAsyncTask;
 import com.briangerardsweeney.odat.util.OptionsMenuHandler;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.Scopes;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.plus.Plus;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+
+import static android.view.View.OnClickListener;
 
 
 /**
@@ -31,7 +41,7 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
  * to listen for item selections.
  */
 public class WatchListActivity extends ActionBarActivity
-        implements WatchListFragment.Callbacks {
+        implements WatchListFragment.Callbacks, ConnectionCallbacks, OnConnectionFailedListener {
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -39,13 +49,59 @@ public class WatchListActivity extends ActionBarActivity
      */
     private boolean mTwoPane;
 
-    private static final String ACCOUNT_NAME = "accountName";
-    private static final String SETTINGS = "deal-daemon-3-prefs";
-    private String accountName;
-    private SharedPreferences settings;
-    GoogleAccountCredential credential;
+    private static final int RC_SIGN_IN = 0;
+    private GoogleApiClient mGoogleApiClient;
+    private boolean mIntentInProgress;
 
-    private static final int REQUEST_ACCOUNT_PICKER = 2;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //TODO check for availability of play services
+        //see here: https://developer.android.com/google/play-services/setup.html
+
+        int answer = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+
+        if(answer != ConnectionResult.SUCCESS){
+            android.app.Dialog update = GooglePlayServicesUtil.getErrorDialog(answer, this, RC_SIGN_IN);
+            update.show();
+        }
+    }
+
+    private boolean mSignInClicked;
+
+    private ConnectionResult mConnectionResult;
+
+    private void resolveSignInError() {
+        if (this.mConnectionResult.hasResolution()) {
+            try {
+                this.mIntentInProgress = true;
+                IntentSender signInIntent = this.mConnectionResult.getResolution().getIntentSender();
+                startIntentSenderForResult(signInIntent,
+                        RC_SIGN_IN, null, 0, 0, 0);
+            } catch (IntentSender.SendIntentException e) {
+                // The intent was canceled before it was sent.  Return to the default
+                // state and attempt to connect to get an updated ConnectionResult.
+                this.mIntentInProgress = false;
+                this.mGoogleApiClient.connect();
+                Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG);    //TODO remove
+            } catch (Exception e) {
+                Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG);    //TODO remove
+            }
+        }
+    }
+
+    public void onConnectionFailed(ConnectionResult result) {
+
+        Toast.makeText(this, result.toString(), Toast.LENGTH_LONG);         //TODO remove
+
+        if (!this.mIntentInProgress ) {
+            this.mConnectionResult = result;
+
+            if(this.mSignInClicked) {
+                this.resolveSignInError();
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,48 +122,60 @@ public class WatchListActivity extends ActionBarActivity
                     .setActivateOnItemClick(true);
         }
 
-        this.settings = getSharedPreferences(SETTINGS, 0);
-        this.credential = GoogleAccountCredential.usingAudience(this, "server:client_id:646330062931-5nrl3bfiong5l1ik0tfnpcv85hvgs5n2.apps.googleusercontent.com");
+        this.mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(Plus.API)
+                .addScope(Plus.SCOPE_PLUS_LOGIN)
+                .build();
 
-        setSelectedAccountName(settings.getString(ACCOUNT_NAME, null));
+        new GcmRegistrationAsyncTask(this, null).execute(); //todo
 
-        if(credential.getSelectedAccountName() != null){
-            //run app
+        findViewById(R.id.sign_in_button).setOnClickListener(new OnClickListener() {
 
-        } else {
-            //make them sign in
-            startActivityForResult(credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
-        }
-
-        //TODO add this to first run - dont run every time unless needed
-        new GcmRegistrationAsyncTask(this).execute();
+            @Override
+            public void onClick(View v) {
+                if (v.getId() == R.id.sign_in_button
+                        && !mGoogleApiClient.isConnecting()) {
+                    mSignInClicked = true;
+                    resolveSignInError();
+                }
+            }
+        });
 
         // TODO: If exposing deep links into your app, handle intents here.
     }
 
-    private void setSelectedAccountName(String accountName) {
-        SharedPreferences.Editor editor = this.settings.edit();
-        editor.putString(ACCOUNT_NAME, accountName);
-        editor.commit();
-        this.credential.setSelectedAccountName(accountName);
-        this.accountName = accountName;
+    @Override
+    protected void onStart() {
+        super.onStart();
+        this.mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if(this.mGoogleApiClient.isConnected()){
+            this.mGoogleApiClient.disconnect();
+        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode){
-            case REQUEST_ACCOUNT_PICKER:
-                if(data != null && data.getExtras() != null) {
-                    String accountName = data.getExtras().getString(AccountManager.KEY_ACCOUNT_NAME);
-                    if(accountName!=null){
-                        setSelectedAccountName(accountName);
-                        SharedPreferences.Editor editor = this.settings.edit();
-                        editor.putString(ACCOUNT_NAME, accountName);
-                        editor.commit();
-                    }
+            case RC_SIGN_IN:
+
+                if(resultCode!=RESULT_OK){
+                    mSignInClicked = false;
                 }
-                break;
+
+                this.mIntentInProgress = false;
+
+                if(!this.mGoogleApiClient.isConnecting()){
+                    this.mGoogleApiClient.connect();
+                }
         }
     }
 
@@ -153,5 +221,17 @@ public class WatchListActivity extends ActionBarActivity
         } else {
             return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        this.mSignInClicked = false;
+        Toast.makeText(this, "User is connected", Toast.LENGTH_LONG).show();
+        //TODO something
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        this.mGoogleApiClient.connect();
     }
 }

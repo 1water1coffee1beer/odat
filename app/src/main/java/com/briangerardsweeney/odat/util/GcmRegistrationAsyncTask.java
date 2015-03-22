@@ -35,7 +35,11 @@ public class GcmRegistrationAsyncTask extends AsyncTask<Void, Context, String> {
     @Override
     protected String doInBackground(Void... params) {
         if (regService == null) {
-            Registration.Builder builder = new Registration.Builder(AndroidHttp.newCompatibleTransport(), new AndroidJsonFactory(), null)
+            Registration.Builder builder =
+                    new Registration.Builder(
+                            AndroidHttp.newCompatibleTransport(),
+                            new AndroidJsonFactory(),
+                            null)
                     .setRootUrl("https://com-briangerardsweeney-odat.appspot.com/_ah/api/");
 
             regService = builder.build();

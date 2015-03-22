@@ -1,22 +1,35 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp" android:baselineAligned="false"
-    android:divider="?android:attr/dividerHorizontal" android:orientation="horizontal"
-    android:showDividers="middle" tools:context=".WatchListActivity">
+<LinearLayout
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <!--
-    This layout is a two-pane layout for the Watches
-    master/detail flow.
-    
-    -->
+    <com.google.android.gms.common.SignInButton
+        android:id="@+id/sign_in_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 
-    <fragment android:id="@+id/watch_list"
-        android:name="com.briangerardsweeney.odat.WatchListFragment" android:layout_width="0dp"
-        android:layout_height="match_parent" android:layout_weight="1"
-        tools:layout="@android:layout/list_content" />
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+        android:layout_height="match_parent" android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp" android:baselineAligned="false"
+        android:divider="?android:attr/dividerHorizontal" android:orientation="horizontal"
+        android:showDividers="middle" tools:context=".WatchListActivity">
 
-    <FrameLayout android:id="@+id/watch_detail_container" android:layout_width="0dp"
-        android:layout_height="match_parent" android:layout_weight="3" />
+        <!--
+        This layout is a two-pane layout for the Watches
+        master/detail flow.
+        -->
 
+        <fragment android:id="@+id/watch_list"
+            android:name="com.briangerardsweeney.odat.WatchListFragment" android:layout_width="0dp"
+            android:layout_height="match_parent" android:layout_weight="1"
+            tools:layout="@android:layout/list_content" />
+
+        <FrameLayout android:id="@+id/watch_detail_container" android:layout_width="0dp"
+            android:layout_height="match_parent" android:layout_weight="3" />
+
+    </LinearLayout>
 </LinearLayout>
+

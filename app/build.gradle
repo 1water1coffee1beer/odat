@@ -8,8 +8,8 @@ android {
         applicationId "com.briangerardsweeney.odat"
         minSdkVersion 15
         targetSdkVersion 20
-        versionCode 1
-        versionName "1.0"
+        versionCode 10
+        versionName "3.0"
     }
     buildTypes {
         release {
