@@ -6,7 +6,6 @@ import android.widget.Toast;
 
 import com.briangerardsweeney.odat.watchservice.registration.Registration;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 
@@ -23,13 +22,10 @@ public class GcmRegistrationAsyncTask extends AsyncTask<Void, Context, String> {
     private GoogleCloudMessaging gcm;
     private Context context;
 
-    private Credential credential;
-
     private static final String SENDER_ID = "646330062931";     //console project number
 
-    public GcmRegistrationAsyncTask(Context context, Credential credential) {
+    public GcmRegistrationAsyncTask(Context context) {
         this.context = context;
-        this.credential = credential;
     }
 
     @Override
@@ -57,6 +53,7 @@ public class GcmRegistrationAsyncTask extends AsyncTask<Void, Context, String> {
             // so it can use GCM/HTTP or CCS to send messages to your app.
             // The request to your server should be authenticated if your app
             // is using accounts.
+            //TODO authenticate
             regService.register(regId).execute();
 
         } catch (IOException ex) {

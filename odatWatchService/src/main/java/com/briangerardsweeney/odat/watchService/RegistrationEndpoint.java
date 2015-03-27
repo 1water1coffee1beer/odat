@@ -9,8 +9,9 @@ package com.briangerardsweeney.odat.watchService;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.ApiNamespace;
-import com.google.api.server.spi.response.CollectionResponse;
+import com.google.appengine.api.oauth.OAuthRequestException;
 import com.google.appengine.api.users.User;
+import com.google.api.server.spi.response.CollectionResponse;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -48,7 +49,7 @@ public class RegistrationEndpoint {
      * @param regId The Google Cloud Messaging registration Id to add
      */
     @ApiMethod(name = "register")
-    public void registerDevice(@Named("regId") String regId, User user) {
+    public void registerDevice(@Named("regId") String regId) {
         if (findRecord(regId) != null) {
             log.info("Device " + regId + " already registered, skipping register");
             return;
@@ -59,12 +60,35 @@ public class RegistrationEndpoint {
     }
 
     /**
+     * Register a device to the backend
+     *
+     * @param regId The Google Cloud Messaging registration Id to add
+     */
+    @ApiMethod(name = "registerAndProvideRegistrationRecord")
+    public RegistrationRecord registerDeviceAndProvideRegistrationRecord(@Named("regId") String regId, User user) throws OAuthRequestException {
+        if(user==null) {
+            throw new OAuthRequestException("No authorized");
+        } else {
+            RegistrationRecord testRecord = findRecord(regId);
+            if (testRecord != null) {
+                log.info("Device " + regId + " already registered, skipping register");
+                return testRecord;
+            }
+            RegistrationRecord record = new RegistrationRecord();
+            record.setRegId(regId);
+            ofy().save().entity(record).now();
+
+            return record;
+        }
+    }
+
+    /**
      * Unregister a device from the backend
      *
      * @param regId The Google Cloud Messaging registration Id to remove
      */
     @ApiMethod(name = "unregister")
-    public void unregisterDevice(@Named("regId") String regId, User user) {
+    public void unregisterDevice(@Named("regId") String regId) {
         RegistrationRecord record = findRecord(regId);
         if (record == null) {
             log.info("Device " + regId + " not registered, skipping unregister");
