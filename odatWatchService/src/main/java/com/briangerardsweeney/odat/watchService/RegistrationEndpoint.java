@@ -59,6 +59,24 @@ public class RegistrationEndpoint {
     }
 
     /**
+     * Register a device to the backend
+     *
+     * @param regId The Google Cloud Messaging registration Id to add
+     */
+    @ApiMethod(name = "registerAndReturnObject")
+    public RegistrationRecord registerDeviceAndReturnObject(@Named("regId") String regId, User user) {
+        RegistrationRecord record = findRecord(regId);
+        if (record != null) {
+            log.info("Device " + regId + " already registered, skipping register");
+            return record;
+        }
+        record = new RegistrationRecord();
+        record.setRegId(regId);
+        ofy().save().entity(record).now();
+        return record;
+    }
+
+    /**
      * Unregister a device from the backend
      *
      * @param regId The Google Cloud Messaging registration Id to remove
