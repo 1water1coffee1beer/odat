@@ -1,7 +1,9 @@
 package com.briangerardsweeney.odat;
 
+import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -12,14 +14,14 @@ import android.widget.Toast;
 
 import com.briangerardsweeney.odat.util.GcmRegistrationAsyncTask;
 import com.briangerardsweeney.odat.util.OptionsMenuHandler;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.Scopes;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.plus.Plus;
-
+import com.briangerardsweeney.odat.watchservice.registration.model.RegistrationRecord;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.plus.Plus;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 
 import static android.view.View.OnClickListener;
 
@@ -43,15 +45,22 @@ import static android.view.View.OnClickListener;
 public class WatchListActivity extends ActionBarActivity
         implements WatchListFragment.Callbacks, ConnectionCallbacks, OnConnectionFailedListener {
 
+    public static final String PREF_ACCOUNT_NAME = "PREF_ACCOUNT_NAME";
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
      * device.
      */
     private boolean mTwoPane;
 
+    private static final int REQUEST_ACCOUNT_PICKER = 2;
     private static final int RC_SIGN_IN = 0;
     private GoogleApiClient mGoogleApiClient;
     private boolean mIntentInProgress;
+    private SharedPreferences settings;
+    private GoogleAccountCredential credential;
+    private String accountName;
+
+    private RegistrationRecord registeredUser;
 
     @Override
     protected void onResume() {
@@ -103,6 +112,8 @@ public class WatchListActivity extends ActionBarActivity
         }
     }
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,7 +140,20 @@ public class WatchListActivity extends ActionBarActivity
                 .addScope(Plus.SCOPE_PLUS_LOGIN)
                 .build();
 
-        new GcmRegistrationAsyncTask(this, null).execute(); //todo
+        this.settings = getSharedPreferences("DealDaemonSettings", 0);
+        this.credential = GoogleAccountCredential.usingAudience(this, "server:client_id:646330062931-19sroourvuq8c9ecdajs7j8d1jjp6ila.apps.googleusercontent.com");
+
+        this.setSelectedAccountName(settings.getString(PREF_ACCOUNT_NAME, null));
+
+        if(this.credential.getSelectedAccountName()!=null){
+            //do nothing i think (no account available shit could break)
+        } else {
+            //not signed in yet
+            this.chooseAccount();
+        }
+
+        GcmRegistrationAsyncTask task = new GcmRegistrationAsyncTask(this, null);
+        task.execute();
 
         findViewById(R.id.sign_in_button).setOnClickListener(new OnClickListener() {
 
@@ -144,6 +168,18 @@ public class WatchListActivity extends ActionBarActivity
         });
 
         // TODO: If exposing deep links into your app, handle intents here.
+    }
+
+    private void setSelectedAccountName(String accountName) {
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString(PREF_ACCOUNT_NAME, accountName);
+        editor.commit();
+        credential.setSelectedAccountName(accountName);
+        this.accountName = accountName;
+    }
+
+    void chooseAccount(){
+        startActivityForResult(this.credential.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
     }
 
     @Override
@@ -165,6 +201,20 @@ public class WatchListActivity extends ActionBarActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode){
+            case REQUEST_ACCOUNT_PICKER:
+                if (data != null && data.getExtras() != null) {
+                    String accountName =
+                            data.getExtras().getString(
+                                    AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountName != null) {
+                        setSelectedAccountName(accountName);
+                        SharedPreferences.Editor editor = settings.edit();
+                        editor.putString(PREF_ACCOUNT_NAME, accountName);
+                        editor.commit();
+                        // User is authorized.
+                    }
+                }
+                break;
             case RC_SIGN_IN:
 
                 if(resultCode!=RESULT_OK){

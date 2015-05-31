@@ -40,7 +40,7 @@ public class GcmRegistrationAsyncTask extends AsyncTask<Void, Context, Registrat
                     new Registration.Builder(
                             AndroidHttp.newCompatibleTransport(),
                             new AndroidJsonFactory(),
-                            null)
+                            this.credential)
                     .setRootUrl("https://com-briangerardsweeney-odat.appspot.com/_ah/api/");
 
             regService = builder.build();
@@ -58,7 +58,6 @@ public class GcmRegistrationAsyncTask extends AsyncTask<Void, Context, Registrat
             // The request to your server should be authenticated if your app
             // is using accounts.
             record = regService.registerAndReturnObject(regId).execute();
-            //regService.register(regId).execute();
 
         } catch (IOException ex) {
             ex.printStackTrace();
