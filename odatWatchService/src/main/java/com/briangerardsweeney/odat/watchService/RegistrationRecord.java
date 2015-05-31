@@ -1,5 +1,6 @@
 package com.briangerardsweeney.odat.watchService;
 
+import com.briangerardsweeney.odat.watchService.odatEntities.OdatUser;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
@@ -17,6 +18,8 @@ public class RegistrationRecord {
     private String regId;
     // you can add more fields...
 
+    private OdatUser user;
+
     public RegistrationRecord() {
     }
 
@@ -26,5 +29,13 @@ public class RegistrationRecord {
 
     public void setRegId(String regId) {
         this.regId = regId;
+    }
+
+    public OdatUser getUser() {
+        return user;
+    }
+
+    public void setUser(OdatUser user) {
+        this.user = user;
     }
 }
